@@ -1,255 +1,575 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Erith Assistant — MCP Test</title>
-<style>
-  :root {
-    --bg: #0f172a;
-    --panel: #1e293b;
-    --accent: #f97316;
-    --text: #e2e8f0;
-    --muted: #94a3b8;
-    --bubble-user: #f97316;
-    --bubble-bot: #334155;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    display: flex;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 24px;
-  }
-  .app {
-    width: 100%;
-    max-width: 720px;
-    display: flex;
-    flex-direction: column;
-    height: 90vh;
-  }
-  header {
-    padding-bottom: 16px;
-  }
-  header h1 {
-    font-size: 20px;
-    margin: 0 0 4px;
-  }
-  header p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 13px;
-  }
-  .status {
-    display: inline-block;
-    margin-top: 8px;
-    font-size: 12px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    background: #334155;
-    color: var(--muted);
-  }
-  .status.ok { background: #14532d; color: #bbf7d0; }
-  .status.err { background: #7f1d1d; color: #fecaca; }
-  .chat-window {
-    flex: 1;
-    background: var(--panel);
-    border-radius: 16px;
-    padding: 16px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .msg {
-    max-width: 80%;
-    padding: 10px 14px;
-    border-radius: 14px;
-    line-height: 1.4;
-    font-size: 14px;
-    white-space: pre-wrap;
-  }
-  .msg.user {
-    align-self: flex-end;
-    background: var(--bubble-user);
-    color: white;
-    border-bottom-right-radius: 4px;
-  }
-  .msg.bot {
-    align-self: flex-start;
-    background: var(--bubble-bot);
-    border-bottom-left-radius: 4px;
-  }
-  .msg.tool {
-    align-self: flex-start;
-    background: transparent;
-    border: 1px dashed #475569;
-    color: var(--muted);
-    font-size: 12px;
-    font-family: ui-monospace, monospace;
-  }
-  .composer {
-    display: flex;
-    gap: 8px;
-    margin-top: 16px;
-  }
-  .composer input {
-    flex: 1;
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid #334155;
-    background: #0b1220;
-    color: var(--text);
-    font-size: 14px;
-  }
-  .composer button {
-    padding: 12px 20px;
-    border-radius: 12px;
-    border: none;
-    background: var(--accent);
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .composer button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  .suggestions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
-  }
-  .suggestions button {
-    background: #0b1220;
-    border: 1px solid #334155;
-    color: var(--muted);
-    border-radius: 999px;
-    padding: 6px 12px;
-    font-size: 12px;
-    cursor: pointer;
-  }
-  .suggestions button:hover {
-    border-color: var(--accent);
-    color: var(--text);
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Erith Assistant — MCP</title>
+
+  <style>
+    :root {
+      --bg: #080b12;
+      --sidebar: #0d111a;
+      --panel: #111722;
+      --panel-2: #151c29;
+      --border: #252d3a;
+      --accent: #fecb00;
+      --accent-hover: #ffd633;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --bubble-user: #fecb00;
+      --bubble-bot: #1b2432;
+      --input: #0c111a;
+      --success: #22c55e;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+    .app {
+      width: 100%; height: 100vh; display: flex;
+      background: radial-gradient(circle at 70% 0%, rgba(249, 115, 22, 0.08), transparent 30%), var(--bg);
+    }
+    .sidebar {
+      width: 260px; height: 100vh; background: rgba(13, 17, 26, 0.96);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      padding: 22px 16px; flex-shrink: 0;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; padding: 4px 8px 24px; }
+    .brand-logo {
+      width: 42px; height: 42px; border-radius: 13px;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+      box-shadow: 0 8px 24px rgba(249, 115, 22, 0.22);
+    }
+    .brand-text h2 { margin: 0; font-size: 15px; font-weight: 700; }
+    .brand-text span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .new-chat {
+      width: 100%; border: 1px solid var(--border); background: #141b27; color: var(--text);
+      border-radius: 11px; padding: 11px 13px; font-size: 13px; display: flex; align-items: center;
+      gap: 9px; cursor: pointer; transition: 0.2s;
+    }
+    .new-chat:hover { background: #1a2230; border-color: #394456; }
+    .sidebar-section { margin-top: 28px; }
+    .sidebar-title {
+      color: #64748b; font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; padding: 0 9px; margin-bottom: 10px;
+    }
+    .capability {
+      padding: 10px 9px; border-radius: 9px; color: #cbd5e1; font-size: 12px;
+      display: flex; gap: 9px; align-items: center;
+    }
+    .capability span:first-child { font-size: 15px; }
+    .sidebar-bottom { margin-top: auto; padding: 12px 8px 0; border-top: 1px solid var(--border); }
+    .connection { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); }
+    .connection-dot { width: 7px; height: 7px; border-radius: 50%; background: #64748b; }
+    .connection-dot.online { background: var(--success); box-shadow: 0 0 8px rgba(34, 197, 94, 0.7); }
+    .chat-app { flex: 1; height: 100vh; min-width: 0; display: flex; flex-direction: column; }
+    .topbar {
+      height: 72px; border-bottom: 1px solid var(--border); display: flex; align-items: center;
+      justify-content: space-between; padding: 0 28px; background: rgba(8, 11, 18, 0.82);
+      backdrop-filter: blur(14px); flex-shrink: 0;
+    }
+    .assistant-info { display: flex; align-items: center; gap: 12px; }
+    .bot-avatar {
+      width: 38px; height: 38px; border-radius: 11px;
+      background: linear-gradient(135deg, #f97316, #c2410c);
+      display: flex; align-items: center; justify-content: center; font-size: 17px;
+      box-shadow: 0 5px 18px rgba(249, 115, 22, 0.18);
+    }
+    .assistant-info h1 { margin: 0; font-size: 14px; font-weight: 700; }
+    .assistant-info p { margin: 3px 0 0; font-size: 11px; color: var(--muted); }
+    .mcp-badge {
+      border: 1px solid #334155; background: #111827; color: #94a3b8; border-radius: 999px;
+      padding: 6px 10px; font-size: 10px; font-family: monospace;
+    }
+    .chat-window { flex: 1; overflow-y: auto; padding: 32px 24px 20px; scroll-behavior: smooth; }
+    .chat-container { width: 100%; max-width: 900px; margin: 0 auto; }
+    .chat-window::-webkit-scrollbar { width: 7px; }
+    .chat-window::-webkit-scrollbar-track { background: transparent; }
+    .chat-window::-webkit-scrollbar-thumb { background: #263142; border-radius: 20px; }
+    .chat-window::-webkit-scrollbar-thumb:hover { background: #374151; }
+    .welcome { min-height: 55vh; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .welcome-inner { max-width: 650px; }
+    .welcome-icon {
+      width: 68px; height: 68px; margin: 0 auto 20px; border-radius: 20px;
+      background: linear-gradient(135deg, #f97316, #c2410c);
+      display: flex; align-items: center; justify-content: center; font-size: 30px;
+      box-shadow: 0 15px 40px rgba(249, 115, 22, 0.2);
+    }
+    .welcome h2 { margin: 0; font-size: 27px; font-weight: 700; letter-spacing: -0.02em; }
+    .welcome p { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 10px auto 0; max-width: 540px; }
+    .message-row { display: flex; width: 100%; margin-bottom: 22px; gap: 11px; }
+    .message-row.user { justify-content: flex-end; }
+    .message-row.bot { justify-content: flex-start; }
+    .message-avatar {
+      width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; display: flex;
+      align-items: center; justify-content: center; font-size: 13px; margin-top: 2px;
+    }
+    .message-row.bot .message-avatar { background: linear-gradient(135deg, #f97316, #c2410c); }
+    .message-content { max-width: min(720px, 80%); }
+    .message-name { font-size: 10px; color: #64748b; margin-bottom: 5px; padding-left: 2px; }
+    .msg {
+      padding: 12px 15px; border-radius: 15px; line-height: 1.55; font-size: 14px;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .msg.user {
+      background: var(--bubble-user); color: white; border-bottom-right-radius: 4px;
+      box-shadow: 0 6px 18px rgba(249, 115, 22, 0.12);
+    }
+    .msg.bot { background: var(--bubble-bot); color: #e5e7eb; border: 1px solid #273244; border-bottom-left-radius: 4px; }
+    .msg.bot img { max-width: 100%; border-radius: 10px; margin: 6px 0; display: block; }
+    .msg.bot a { color: var(--accent); text-decoration: underline; }
+    .message-time { font-size: 9px; color: #475569; margin-top: 5px; padding: 0 3px; }
+    .message-row.user .message-time { text-align: right; }
+    .tool-row { display: flex; gap: 9px; align-items: center; margin: -6px 0 18px 42px; }
+    .tool-icon {
+      width: 27px; height: 27px; border-radius: 8px; background: #17202d; border: 1px solid #2b3748;
+      display: flex; align-items: center; justify-content: center; font-size: 12px;
+    }
+    .msg.tool {
+      padding: 7px 10px; background: #0f151f; border: 1px dashed #344155; color: #8190a5;
+      font-size: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; border-radius: 8px;
+    }
+    .typing { display: flex; align-items: center; gap: 5px; padding: 5px 2px; }
+    .typing span { width: 6px; height: 6px; background: #94a3b8; border-radius: 50%; animation: typing 1.2s infinite ease-in-out; }
+    .typing span:nth-child(2) { animation-delay: 0.15s; }
+    .typing span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-4px); opacity: 1; }
+    }
+    .suggestions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 25px; }
+    .suggestions button {
+      text-align: left; background: #101722; border: 1px solid #273244; color: #cbd5e1;
+      border-radius: 12px; padding: 13px 14px; font-size: 12px; line-height: 1.4; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    }
+    .suggestions button:hover { background: #161f2d; border-color: #4b5563; transform: translateY(-1px); }
+    .suggestion-icon { display: block; margin-bottom: 6px; font-size: 16px; }
+    .composer-wrapper { padding: 10px 24px 20px; flex-shrink: 0; }
+    .composer-container { max-width: 900px; margin: 0 auto; }
+    .composer {
+      display: flex; align-items: flex-end; gap: 9px; background: var(--input);
+      border: 1px solid #2a3443; border-radius: 16px; padding: 7px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25); transition: border-color 0.2s;
+    }
+    .composer:focus-within { border-color: #465366; }
+    .composer input {
+      flex: 1; min-width: 0; height: 42px; padding: 0 11px; border: none; outline: none;
+      background: transparent; color: var(--text); font-size: 14px;
+    }
+    .composer input::placeholder { color: #64748b; }
+    .composer button {
+      width: 42px; height: 42px; border-radius: 11px; border: none; background: var(--accent);
+      color: white; display: flex; align-items: center; justify-content: center; font-size: 16px;
+      cursor: pointer; transition: background 0.2s, transform 0.2s;
+    }
+    .composer button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .composer button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .composer-note { text-align: center; color: #475569; font-size: 9px; margin-top: 8px; }
+    @media (max-width: 760px) {
+      body { overflow: hidden; }
+      .sidebar { display: none; }
+      .topbar { height: 62px; padding: 0 15px; }
+      .assistant-info h1 { font-size: 13px; }
+      .assistant-info p { font-size: 10px; }
+      .mcp-badge { display: none; }
+      .chat-window { padding: 22px 13px 15px; }
+      .message-content { max-width: 86%; }
+      .msg { font-size: 13px; }
+      .welcome { min-height: 65vh; }
+      .welcome h2 { font-size: 23px; }
+      .welcome p { font-size: 12px; }
+      .suggestions { grid-template-columns: 1fr; gap: 8px; }
+      .composer-wrapper { padding: 7px 10px 13px; }
+      .composer { border-radius: 14px; }
+      .composer input { font-size: 13px; }
+      .tool-row { margin-left: 38px; }
+    }
+    @media (max-width: 430px) {
+      .message-avatar { width: 27px; height: 27px; }
+      .message-row { gap: 8px; }
+      .message-content { max-width: 88%; }
+      .msg { padding: 10px 12px; }
+    }
+  </style>
 </head>
 <body>
   <div class="app">
-    <header>
-      <h1>🧪 Erith Assistant — MCP test</h1>
-      <p>Talks to your backend's <code>/api/chat</code>, which asks Gemini to use your tools directly against your real database.</p>
-      <span id="status" class="status">checking backend…</span>
-      <div class="suggestions">
-        <button data-q="What product categories do you have?">What product categories do you have?</button>
-        <button data-q="Do you have any open jobs right now?">Open jobs?</button>
-        <button data-q="Tell me about any products related to mining.">Products for mining</button>
-        <button data-q="Show me your latest blog posts.">Latest blog posts</button>
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">🤖</div>
+        <div class="brand-text">
+          <h2>Erith Assistant</h2>
+          <span>Industrial AI Assistant</span>
+        </div>
       </div>
-    </header>
+      <button class="new-chat" id="newChatBtn">
+        <span>＋</span>
+        <span>New conversation</span>
+      </button>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Capabilities</div>
+        <div class="capability"><span>📦</span><span>Product information</span></div>
+        <div class="capability"><span>💼</span><span>Career & job information</span></div>
+        <div class="capability"><span>📝</span><span>Blogs & knowledge center</span></div>
+        <div class="capability"><span>🔧</span><span>Database tools</span></div>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="connection">
+          <span class="connection-dot" id="connectionDot"></span>
+          <span id="sidebarStatus">Checking backend...</span>
+        </div>
+      </div>
+    </aside>
 
-    <div class="chat-window" id="chatWindow"></div>
+    <main class="chat-app">
+      <header class="topbar">
+        <div class="assistant-info">
+          <div class="bot-avatar">🤖</div>
+          <div>
+            <h1>Erith Assistant</h1>
+            <p>Ask about products, jobs, industries & more</p>
+          </div>
+        </div>
+        <div class="mcp-badge">MCP CONNECTED</div>
+      </header>
 
-    <form class="composer" id="composer">
-      <input id="input" type="text" placeholder="Ask about products, jobs, blogs…" autocomplete="off" />
-      <button type="submit" id="sendBtn">Send</button>
-    </form>
+      <div class="chat-window" id="chatWindow">
+        <div class="chat-container" id="chatContainer">
+          <div class="welcome" id="welcome">
+            <div class="welcome-inner">
+              <div class="welcome-icon">🤖</div>
+              <h2>How can I help you?</h2>
+              <p>I can help you explore Erith products, industries, job opportunities, blog posts and information from the connected database.</p>
+              <div class="suggestions">
+                <button data-q="What product categories do you have?"><span class="suggestion-icon">📦</span>What product categories do you have?</button>
+                <button data-q="Do you have any open jobs right now?"><span class="suggestion-icon">💼</span>Do you have any open jobs right now?</button>
+                <button data-q="Tell me about any products related to mining."><span class="suggestion-icon">⛏️</span>Show products related to mining</button>
+                <button data-q="Show me your latest blog posts."><span class="suggestion-icon">📝</span>Show me your latest blog posts</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer-wrapper">
+        <div class="composer-container">
+          <form class="composer" id="composer">
+            <input id="input" type="text" placeholder="Message Erith Assistant..." autocomplete="off" />
+            <button type="submit" id="sendBtn" title="Send message">➤</button>
+          </form>
+          <div class="composer-note">Erith Assistant can access information through connected MCP tools.</div>
+        </div>
+      </div>
+    </main>
   </div>
 
-<script>
-  // Point this at your backend. Defaults to same-origin :5050 for local testing.
-  const BACKEND_URL = window.ERITH_BACKEND_URL || "http://localhost:5050";
+  <script>
+    const BACKEND_URL = window.ERITH_BACKEND_URL || "https://mcp-backend-1.onrender.com";
 
-  const chatWindow = document.getElementById("chatWindow");
-  const form = document.getElementById("composer");
-  const input = document.getElementById("input");
-  const sendBtn = document.getElementById("sendBtn");
-  const statusEl = document.getElementById("status");
+    const chatWindow = document.getElementById("chatWindow");
+    const chatContainer = document.getElementById("chatContainer");
+    const form = document.getElementById("composer");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("sendBtn");
+    const connectionDot = document.getElementById("connectionDot");
+    const sidebarStatus = document.getElementById("sidebarStatus");
+    const newChatBtn = document.getElementById("newChatBtn");
 
-  let history = [];
+    let history = [];
 
-  function addMessage(role, text) {
-    const div = document.createElement("div");
-    div.className = "msg " + role;
-    div.textContent = text;
-    chatWindow.appendChild(div);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-    return div;
-  }
-
-  function addToolTrace(toolCalls) {
-    if (!toolCalls || !toolCalls.length) return;
-    const names = toolCalls.map((t) => t.name).join(", ");
-    const div = document.createElement("div");
-    div.className = "msg tool";
-    div.textContent = "🔧 called: " + names;
-    chatWindow.appendChild(div);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-  }
-
-  async function checkHealth() {
-    try {
-      const res = await fetch(BACKEND_URL + "/health");
-      if (res.ok) {
-        statusEl.textContent = "backend reachable ✓";
-        statusEl.className = "status ok";
-      } else {
-        throw new Error("bad status");
-      }
-    } catch (e) {
-      statusEl.textContent = "backend NOT reachable at " + BACKEND_URL;
-      statusEl.className = "status err";
+    function getTime() {
+      return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
-  }
-  checkHealth();
 
-  async function sendMessage(text) {
-    addMessage("user", text);
-    history.push({ role: "user", content: text });
-    input.value = "";
-    sendBtn.disabled = true;
-    const thinking = addMessage("bot", "…");
+    function removeWelcome() {
+      const welcomeElement = document.getElementById("welcome");
+      if (welcomeElement) welcomeElement.remove();
+    }
 
-    try {
-      const res = await fetch(BACKEND_URL + "/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history: history.slice(0, -1) }),
+    // ==========================================
+    // MINI MARKDOWN RENDERER (links, images, bold)
+    // ==========================================
+    // Escapes HTML first (so model output can never inject arbitrary
+    // markup), then converts a small, safe subset of markdown to real HTML.
+    // This is what turns [text](url) and ![alt](url) from the model's
+    // plain-text reply into actual clickable links and visible images.
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|svg)(\?[^\s)]*)?$/i;
+
+    function renderBotContent(rawText) {
+      let text = escapeHtml(rawText);
+
+      // Headers: "### Title" -> bold line (line-based, before other inline rules)
+      text = text.replace(/^#{1,6}\s+(.+)$/gm, "<strong>$1</strong>");
+
+      // Bullets: "* item" or "- item" at line start -> "• item"
+      text = text.replace(/^[*-]\s+(.+)$/gm, "• $1");
+
+      // ![alt](url) -> always an image
+      text = text.replace(
+        /!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g,
+        (m, alt, url) => `<img src="${url}" alt="${alt}" loading="lazy" data-fallback-alt="${alt}" />`
+      );
+
+      // [label](url) -> if the URL itself is an image file, show the
+      // picture regardless of whether the model used image syntax or not;
+      // otherwise render as a normal clickable link.
+      text = text.replace(
+        /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+        (m, label, url) => {
+          if (IMAGE_EXT_RE.test(url)) {
+            return `<img src="${url}" alt="${label}" loading="lazy" data-fallback-alt="${label}" />`;
+          }
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+        }
+      );
+
+      // **bold**
+      text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+
+      // *italic* (single asterisk, whatever's left after bold is consumed)
+      text = text.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+
+      // Any remaining bare URLs not already wrapped above — same
+      // image-vs-link detection applies here too.
+      text = text.replace(
+        /(^|[^"'>])(https?:\/\/[^\s<]+)/g,
+        (m, pre, url) => {
+          if (IMAGE_EXT_RE.test(url)) {
+            return `${pre}<img src="${url}" alt="" loading="lazy" />`;
+          }
+          return `${pre}<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+        }
+      );
+
+      return text;
+    }
+
+    // If an image URL 404s or otherwise fails, swap it for a small text
+    // note instead of leaving the browser's broken-image icon on screen.
+    function attachImageFallbacks(container) {
+      container.querySelectorAll("img").forEach((img) => {
+        img.addEventListener(
+          "error",
+          () => {
+            const note = document.createElement("span");
+            note.textContent = "[image unavailable" + (img.dataset.fallbackAlt ? ": " + img.dataset.fallbackAlt : "") + "]";
+            note.style.color = "#8190a5";
+            note.style.fontStyle = "italic";
+            note.style.fontSize = "12px";
+            img.replaceWith(note);
+          },
+          { once: true }
+        );
       });
-      const data = await res.json();
-      thinking.remove();
+    }
 
-      if (!res.ok) {
-        addMessage("bot", "⚠️ " + (data.error || "Something went wrong."));
-        return;
+    function addMessage(role, text) {
+      removeWelcome();
+
+      const row = document.createElement("div");
+      row.className = "message-row " + role;
+
+      if (role === "bot") {
+        const avatar = document.createElement("div");
+        avatar.className = "message-avatar";
+        avatar.textContent = "🤖";
+        row.appendChild(avatar);
       }
 
-      addToolTrace(data.tool_calls);
-      addMessage("bot", data.reply || "(no text response)");
-      history.push({ role: "assistant", content: data.reply || "" });
-    } catch (err) {
-      thinking.remove();
-      addMessage("bot", "⚠️ Could not reach backend: " + err.message);
-    } finally {
-      sendBtn.disabled = false;
+      const content = document.createElement("div");
+      content.className = "message-content";
+
+      const name = document.createElement("div");
+      name.className = "message-name";
+      name.textContent = role === "user" ? "You" : "Erith Assistant";
+
+      const message = document.createElement("div");
+      message.className = "msg " + role;
+
+      // Bot replies may contain markdown links/images from the model;
+      // the user's own typed text is always plain text (never HTML
+      // rendered), so nothing the user types can inject markup.
+      if (role === "bot") {
+        message.innerHTML = renderBotContent(text);
+        attachImageFallbacks(message);
+      } else {
+        message.textContent = text;
+      }
+
+      const time = document.createElement("div");
+      time.className = "message-time";
+      time.textContent = getTime();
+
+      content.appendChild(name);
+      content.appendChild(message);
+      content.appendChild(time);
+      row.appendChild(content);
+      chatContainer.appendChild(row);
+      scrollToBottom();
+      return row;
     }
-  }
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const text = input.value.trim();
-    if (text) sendMessage(text);
-  });
+    function addToolTrace(toolCalls) {
+      if (!toolCalls || !toolCalls.length) return;
 
-  document.querySelectorAll(".suggestions button").forEach((btn) => {
-    btn.addEventListener("click", () => sendMessage(btn.dataset.q));
-  });
-</script>
+      const row = document.createElement("div");
+      row.className = "tool-row";
+
+      const icon = document.createElement("div");
+      icon.className = "tool-icon";
+      icon.textContent = "🔧";
+
+      const div = document.createElement("div");
+      div.className = "msg tool";
+      const names = toolCalls.map((t) => t.name).join(", ");
+      div.textContent = "Tool called: " + names;
+
+      row.appendChild(icon);
+      row.appendChild(div);
+      chatContainer.appendChild(row);
+      scrollToBottom();
+    }
+
+    function addTyping() {
+      const row = document.createElement("div");
+      row.className = "message-row bot";
+      row.id = "typingRow";
+
+      const avatar = document.createElement("div");
+      avatar.className = "message-avatar";
+      avatar.textContent = "🤖";
+
+      const content = document.createElement("div");
+      content.className = "message-content";
+
+      const name = document.createElement("div");
+      name.className = "message-name";
+      name.textContent = "Erith Assistant";
+
+      const bubble = document.createElement("div");
+      bubble.className = "msg bot";
+
+      const typing = document.createElement("div");
+      typing.className = "typing";
+      typing.innerHTML = "<span></span><span></span><span></span>";
+
+      bubble.appendChild(typing);
+      content.appendChild(name);
+      content.appendChild(bubble);
+      row.appendChild(avatar);
+      row.appendChild(content);
+      chatContainer.appendChild(row);
+      scrollToBottom();
+    }
+
+    function removeTyping() {
+      const typing = document.getElementById("typingRow");
+      if (typing) typing.remove();
+    }
+
+    function scrollToBottom() {
+      setTimeout(() => { chatWindow.scrollTop = chatWindow.scrollHeight; }, 50);
+    }
+
+    async function checkHealth() {
+      try {
+        const res = await fetch(BACKEND_URL + "/health");
+        if (res.ok) {
+          connectionDot.classList.add("online");
+          sidebarStatus.textContent = "Backend connected";
+        } else {
+          throw new Error("Bad status");
+        }
+      } catch (e) {
+        connectionDot.classList.remove("online");
+        sidebarStatus.textContent = "Backend unavailable";
+      }
+    }
+    checkHealth();
+
+    async function sendMessage(text) {
+      if (!text) return;
+
+      addMessage("user", text);
+      history.push({ role: "user", content: text });
+      input.value = "";
+      sendBtn.disabled = true;
+      addTyping();
+
+      try {
+        const res = await fetch(BACKEND_URL + "/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, history: history.slice(0, -1) }),
+        });
+        const data = await res.json();
+        removeTyping();
+
+        if (!res.ok) {
+          addMessage("bot", "⚠️ " + (data.error || "Something went wrong."));
+          return;
+        }
+
+        addToolTrace(data.tool_calls);
+        const reply = data.reply || "(no text response)";
+        addMessage("bot", reply);
+        history.push({ role: "assistant", content: reply });
+      } catch (err) {
+        removeTyping();
+        addMessage("bot", "⚠️ Could not reach backend: " + err.message);
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (text) sendMessage(text);
+    });
+
+    document.querySelectorAll(".suggestions button").forEach((btn) => {
+      btn.addEventListener("click", () => sendMessage(btn.dataset.q));
+    });
+
+    newChatBtn.addEventListener("click", () => {
+      history = [];
+      chatContainer.innerHTML = `
+        <div class="welcome" id="welcome">
+          <div class="welcome-inner">
+            <div class="welcome-icon">🤖</div>
+            <h2>How can I help you?</h2>
+            <p>I can help you explore Erith products, industries, job opportunities, blog posts and information from the connected database.</p>
+            <div class="suggestions">
+              <button data-q="What product categories do you have?"><span class="suggestion-icon">📦</span>What product categories do you have?</button>
+              <button data-q="Do you have any open jobs right now?"><span class="suggestion-icon">💼</span>Do you have any open jobs right now?</button>
+              <button data-q="Tell me about any products related to mining."><span class="suggestion-icon">⛏️</span>Show products related to mining</button>
+              <button data-q="Show me your latest blog posts."><span class="suggestion-icon">📝</span>Show me your latest blog posts</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.querySelectorAll(".suggestions button").forEach((btn) => {
+        btn.addEventListener("click", () => sendMessage(btn.dataset.q));
+      });
+      input.focus();
+    });
+  </script>
 </body>
 </html>
