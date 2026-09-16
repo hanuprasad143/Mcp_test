@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Erith Assistant — MCP Test</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --accent: #f97316;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --bubble-user: #f97316;
+    --bubble-bot: #334155;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .app {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
+  }
+  header {
+    padding-bottom: 16px;
+  }
+  header h1 {
+    font-size: 20px;
+    margin: 0 0 4px;
+  }
+  header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .status {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #334155;
+    color: var(--muted);
+  }
+  .status.ok { background: #14532d; color: #bbf7d0; }
+  .status.err { background: #7f1d1d; color: #fecaca; }
+  .chat-window {
+    flex: 1;
+    background: var(--panel);
+    border-radius: 16px;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .msg {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    line-height: 1.4;
+    font-size: 14px;
+    white-space: pre-wrap;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--bubble-user);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.bot {
+    align-self: flex-start;
+    background: var(--bubble-bot);
+    border-bottom-left-radius: 4px;
+  }
+  .msg.tool {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px dashed #475569;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: ui-monospace, monospace;
+  }
+  .composer {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .composer input {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    background: #0b1220;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .composer button {
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .composer button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .suggestions button {
+    background: #0b1220;
+    border: 1px solid #334155;
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .suggestions button:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>🧪 Erith Assistant — MCP test</h1>
+      <p>Talks to your backend's <code>/api/chat</code>, which asks Gemini to use your tools directly against your real database.</p>
+      <span id="status" class="status">checking backend…</span>
+      <div class="suggestions">
+        <button data-q="What product categories do you have?">What product categories do you have?</button>
+        <button data-q="Do you have any open jobs right now?">Open jobs?</button>
+        <button data-q="Tell me about any products related to mining.">Products for mining</button>
+        <button data-q="Show me your latest blog posts.">Latest blog posts</button>
+      </div>
+    </header>
+
+    <div class="chat-window" id="chatWindow"></div>
+
+    <form class="composer" id="composer">
+      <input id="input" type="text" placeholder="Ask about products, jobs, blogs…" autocomplete="off" />
+      <button type="submit" id="sendBtn">Send</button>
+    </form>
+  </div>
+
+<script>
+  // Point this at your backend. Defaults to same-origin :5050 for local testing.
+  const BACKEND_URL = window.ERITH_BACKEND_URL || "http://localhost:5050";
+
+  const chatWindow = document.getElementById("chatWindow");
+  const form = document.getElementById("composer");
+  const input = document.getElementById("input");
+  const sendBtn = document.getElementById("sendBtn");
+  const statusEl = document.getElementById("status");
+
+  let history = [];
+
+  function addMessage(role, text) {
+    const div = document.createElement("div");
+    div.className = "msg " + role;
+    div.textContent = text;
+    chatWindow.appendChild(div);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+    return div;
+  }
+
+  function addToolTrace(toolCalls) {
+    if (!toolCalls || !toolCalls.length) return;
+    const names = toolCalls.map((t) => t.name).join(", ");
+    const div = document.createElement("div");
+    div.className = "msg tool";
+    div.textContent = "🔧 called: " + names;
+    chatWindow.appendChild(div);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  async function checkHealth() {
+    try {
+      const res = await fetch(BACKEND_URL + "/health");
+      if (res.ok) {
+        statusEl.textContent = "backend reachable ✓";
+        statusEl.className = "status ok";
+      } else {
+        throw new Error("bad status");
+      }
+    } catch (e) {
+      statusEl.textContent = "backend NOT reachable at " + BACKEND_URL;
+      statusEl.className = "status err";
+    }
+  }
+  checkHealth();
+
+  async function sendMessage(text) {
+    addMessage("user", text);
+    history.push({ role: "user", content: text });
+    input.value = "";
+    sendBtn.disabled = true;
+    const thinking = addMessage("bot", "…");
+
+    try {
+      const res = await fetch(BACKEND_URL + "/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, history: history.slice(0, -1) }),
+      });
+      const data = await res.json();
+      thinking.remove();
+
+      if (!res.ok) {
+        addMessage("bot", "⚠️ " + (data.error || "Something went wrong."));
+        return;
+      }
+
+      addToolTrace(data.tool_calls);
+      addMessage("bot", data.reply || "(no text response)");
+      history.push({ role: "assistant", content: data.reply || "" });
+    } catch (err) {
+      thinking.remove();
+      addMessage("bot", "⚠️ Could not reach backend: " + err.message);
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (text) sendMessage(text);
+  });
+
+  document.querySelectorAll(".suggestions button").forEach((btn) => {
+    btn.addEventListener("click", () => sendMessage(btn.dataset.q));
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "erith-mcp-test-backend",
+  "version": "1.0.0",
+  "description": "Standalone test project: MCP server + Gemini-powered chat bridge, for verifying the Erith MCP integration before dropping it into the real backend.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^2.22.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mysql2": "^3.24.4",
+    "zod": "^3.23.8"
+  }
+}
